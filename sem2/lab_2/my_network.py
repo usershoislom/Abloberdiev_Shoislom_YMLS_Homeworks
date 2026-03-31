@@ -94,8 +94,8 @@ class Decoder(nn.Module):
         src_len = encoder_outputs.shape[0]
         hidden_last = hidden[-1].unsqueeze(0).repeat(src_len, 1, 1)
     
-        energy = torch.tanh(self.attn_linear(torch.cat((encoder_outputs, hidden_last), dim=2)))
-        attention = self.attn_v(energy).squeeze(2)
+        score = torch.tanh(self.attn_linear(torch.cat((encoder_outputs, hidden_last), dim=2)))
+        attention = self.attn_v(score).squeeze(2)
         attention_weights = torch.softmax(attention, dim=0)
         context = (encoder_outputs * attention_weights.unsqueeze(2)).sum(dim=0).unsqueeze(0)
     
@@ -103,8 +103,8 @@ class Decoder(nn.Module):
 
 
         output, (hidden, cell) = self.rnn(rnn_input, (hidden, cell))
-        prediction = self.out(torch.cat((output.squeeze(0), context.squeeze(0)), dim=1))
-        
+        prediction = self.out(self.dropout(torch.cat((output.squeeze(0), context.squeeze(0)), dim=1)))
+
         
         return prediction, hidden, cell
 
